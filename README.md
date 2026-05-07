@@ -2,6 +2,12 @@
 
 A comprehensive Object-Oriented Programming (OOP) implementation of a **Car Rental System** using TypeScript. The system allows users to reserve cars of different types, manage pricing, and handle complex reservation scenarios.
 
+## Requirements
+View the [PDF page](./requirements.pdf).
+
+## AI Powered
+[Read the story here](./prompts.md)
+
 ## ✨ Features
 
 ### Core Functionality
