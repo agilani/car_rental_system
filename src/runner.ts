@@ -17,9 +17,15 @@ function printStats(system: CarRentalSystem): void {
   console.log(`   Total Cars: ${stats.totalCars}`);
   console.log(`   Available: ${stats.availableCars}`);
   console.log(`   Reserved: ${stats.reservedCars}`);
-  console.log(`   Sedans: ${stats.availableCarsByType[CarType.SEDAN]}/${stats.carsByType[CarType.SEDAN]} available`);
-  console.log(`   SUVs: ${stats.availableCarsByType[CarType.SUV]}/${stats.carsByType[CarType.SUV]} available`);
-  console.log(`   Vans: ${stats.availableCarsByType[CarType.VAN]}/${stats.carsByType[CarType.VAN]} available`);
+  console.log(
+    `   Sedans: ${stats.availableCarsByType[CarType.SEDAN]}/${stats.carsByType[CarType.SEDAN]} available`,
+  );
+  console.log(
+    `   SUVs: ${stats.availableCarsByType[CarType.SUV]}/${stats.carsByType[CarType.SUV]} available`,
+  );
+  console.log(
+    `   Vans: ${stats.availableCarsByType[CarType.VAN]}/${stats.carsByType[CarType.VAN]} available`,
+  );
 }
 
 function runCarRentalDemo(): void {
@@ -136,7 +142,9 @@ function runCarRentalDemo(): void {
   allReservations.forEach((res, index) => {
     console.log(`${index + 1}. ID: ${res.getId()}`);
     console.log(`   Type: ${res.getCarType()}`);
-    console.log(`   Dates: ${res.getStartDate().toDateString()} - ${res.getEndDate().toDateString()}`);
+    console.log(
+      `   Dates: ${res.getStartDate().toDateString()} - ${res.getEndDate().toDateString()}`,
+    );
     console.log(`   Cost: $${res.getTotalCost()}`);
   });
 
@@ -168,7 +176,9 @@ function runCarRentalDemo(): void {
   const conflictDate = new Date(reservation1.getStartDate());
   conflictDate.setDate(conflictDate.getDate() + 1);
 
-  console.log(`\nAttempting to book the same car on overlapping date (${conflictDate.toDateString()})...`);
+  console.log(
+    `\nAttempting to book the same car on overlapping date (${conflictDate.toDateString()})...`,
+  );
   try {
     system.reserveCar(CarType.SEDAN, conflictDate, 2);
   } catch (error) {
@@ -176,7 +186,9 @@ function runCarRentalDemo(): void {
   }
 
   // Book after the original reservation ends
-  console.log(`\nBooking after the original reservation ends (${reservation1.getEndDate().toDateString()})...`);
+  console.log(
+    `\nBooking after the original reservation ends (${reservation1.getEndDate().toDateString()})...`,
+  );
   try {
     const afterOriginalRes = system.reserveCar(CarType.SEDAN, reservation1.getEndDate(), 1);
     console.log(`✓ Successfully booked (ID: ${afterOriginalRes.getId()})`);
@@ -222,9 +234,7 @@ function runCarRentalDemo(): void {
   printStats(system);
 
   console.log("\n\n✅ Demonstration completed successfully!");
-  console.log(
-    "\nThe Car Rental System successfully demonstrates:"
-  );
+  console.log("\nThe Car Rental System successfully demonstrates:");
   console.log("  ✓ Fleet initialization and management");
   console.log("  ✓ Dynamic pricing configuration");
   console.log("  ✓ Car reservation with date validation");

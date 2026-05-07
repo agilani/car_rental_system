@@ -1,26 +1,20 @@
+import { Injectable, Inject } from "@nestjs/common";
 import { Car } from "../models/Car";
 import { Reservation } from "../models/Reservation";
 import { CarType } from "../types/CarType";
+import { ICarsRepository } from "../repositories/interfaces/cars.repository.interface";
+import { IReservationsRepository } from "../repositories/interfaces/reservations.repository.interface";
 
-interface PricingConfig {
-  [CarType.SEDAN]: number;
-  [CarType.SUV]: number;
-  [CarType.VAN]: number;
-}
+@Injectable()
+export class CarRentalService {
+  private pricingConfig: { [key in CarType]: number };
 
-export class CarRentalSystem {
-  private cars: Map<string, Car>;
-  private reservations: Map<string, Reservation>;
-  private pricingConfig: PricingConfig;
-  private reservationIdCounter: number;
-  private carIdCounter: number;
-
-  constructor() {
-    this.cars = new Map();
-    this.reservations = new Map();
-    this.reservationIdCounter = 1;
-    this.carIdCounter = 1;
-
+  constructor(
+    @Inject("CarsRepository")
+    private readonly carsRepository: ICarsRepository,
+    @Inject("ReservationsRepository")
+    private readonly reservationsRepository: IReservationsRepository,
+  ) {
     // Default pricing per day
     this.pricingConfig = {
       [CarType.SEDAN]: 50,
@@ -33,18 +27,28 @@ export class CarRentalSystem {
    * Initialize the car fleet with specific quantities of each car type
    */
   initializeFleet(sedanCount: number, suvCount: number, vanCount: number): void {
-    this.addCarsToFleet(CarType.SEDAN, sedanCount);
-    this.addCarsToFleet(CarType.SUV, suvCount);
-    this.addCarsToFleet(CarType.VAN, vanCount);
-  }
+    // Get the repository to access ID generation
+    const carsRepo = this.carsRepository as any;
 
-  /**
-   * Add cars of a specific type to the fleet
-   */
-  private addCarsToFleet(type: CarType, count: number): void {
-    for (let i = 0; i < count; i++) {
-      const carId = `CAR-${this.carIdCounter++}`;
-      this.cars.set(carId, new Car(carId, type));
+    // Add sedans
+    for (let i = 0; i < sedanCount; i++) {
+      const carId = carsRepo.generateCarId?.() || `CAR-${i}`;
+      const car = new Car(carId, CarType.SEDAN);
+      this.carsRepository.addCar(car);
+    }
+
+    // Add SUVs
+    for (let i = 0; i < suvCount; i++) {
+      const carId = carsRepo.generateCarId?.() || `CAR-${i}`;
+      const car = new Car(carId, CarType.SUV);
+      this.carsRepository.addCar(car);
+    }
+
+    // Add vans
+    for (let i = 0; i < vanCount; i++) {
+      const carId = carsRepo.generateCarId?.() || `CAR-${i}`;
+      const car = new Car(carId, CarType.VAN);
+      this.carsRepository.addCar(car);
     }
   }
 
@@ -74,27 +78,29 @@ export class CarRentalSystem {
     }
 
     // Check if the car has any conflicting reservations
-    for (const reservation of this.reservations.values()) {
+    const conflictingReservations = this.reservationsRepository.findByCondition((reservation) => {
       if (reservation.getCar().getId() === car.getId()) {
         const resStart = reservation.getStartDate();
         const resEnd = reservation.getEndDate();
 
         // Check for overlapping dates
         if (startDate < resEnd && endDate > resStart) {
-          return false;
+          return true;
         }
       }
-    }
+      return false;
+    });
 
-    return true;
+    return conflictingReservations.length === 0;
   }
 
   /**
    * Find an available car of the given type for the specified dates
    */
   private findAvailableCar(carType: CarType, startDate: Date, endDate: Date): Car | null {
-    for (const car of this.cars.values()) {
-      if (car.getType() === carType && this.isCarAvailableDuringPeriod(car, startDate, endDate)) {
+    const availableCars = this.carsRepository.getCarsByType(carType);
+    for (const car of availableCars) {
+      if (this.isCarAvailableDuringPeriod(car, startDate, endDate)) {
         return car;
       }
     }
@@ -124,7 +130,7 @@ export class CarRentalSystem {
       );
     }
 
-    const reservationId = `RES-${this.reservationIdCounter++}`;
+    const reservationId = (this.reservationsRepository as any).generateReservationId?.() || "RES-1";
     const pricePerDay = this.getPricing(carType);
     const reservation = new Reservation(
       reservationId,
@@ -134,8 +140,8 @@ export class CarRentalSystem {
       pricePerDay,
     );
 
-    this.reservations.set(reservationId, reservation);
-    availableCar.setAvailability(false);
+    this.reservationsRepository.saveReservation(reservation);
+    this.carsRepository.updateCarAvailability(availableCar.getId(), false);
 
     return reservation;
   }
@@ -144,14 +150,14 @@ export class CarRentalSystem {
    * Cancel a reservation and free up the car
    */
   cancelReservation(reservationId: string): boolean {
-    const reservation = this.reservations.get(reservationId);
+    const reservation = this.reservationsRepository.getReservationById(reservationId);
 
     if (!reservation) {
       throw new Error(`Reservation ${reservationId} not found`);
     }
 
     reservation.getCar().setAvailability(true);
-    this.reservations.delete(reservationId);
+    this.reservationsRepository.deleteReservation(reservationId);
 
     return true;
   }
@@ -160,7 +166,7 @@ export class CarRentalSystem {
    * Get a reservation by ID
    */
   getReservation(reservationId: string): Reservation {
-    const reservation = this.reservations.get(reservationId);
+    const reservation = this.reservationsRepository.getReservationById(reservationId);
 
     if (!reservation) {
       throw new Error(`Reservation ${reservationId} not found`);
@@ -173,37 +179,29 @@ export class CarRentalSystem {
    * Get all current reservations
    */
   getAllReservations(): Reservation[] {
-    return Array.from(this.reservations.values());
+    return this.reservationsRepository.getAllReservations();
   }
 
   /**
    * Get all cars
    */
   getAllCars(): Car[] {
-    return Array.from(this.cars.values());
+    return this.carsRepository.getAllCars();
   }
 
   /**
    * Get available cars of a specific type
    */
   getAvailableCars(carType: CarType): Car[] {
-    return Array.from(this.cars.values()).filter(
-      (car) => car.getType() === carType && car.isCarAvailable(),
-    );
+    return this.carsRepository.getAvailableCarsByType(carType);
   }
 
   /**
    * Get fleet statistics
    */
-  getFleetStats(): {
-    totalCars: number;
-    availableCars: number;
-    reservedCars: number;
-    carsByType: { [key in CarType]: number };
-    availableCarsByType: { [key in CarType]: number };
-  } {
+  getFleetStats() {
     const stats = {
-      totalCars: this.cars.size,
+      totalCars: this.carsRepository.getAllCars().length,
       availableCars: 0,
       reservedCars: 0,
       carsByType: {
@@ -218,20 +216,17 @@ export class CarRentalSystem {
       },
     };
 
-    for (const car of this.cars.values()) {
-      const type = car.getType();
-      stats.carsByType[type]++;
+    for (const carType of Object.values(CarType)) {
+      const allCarsOfType = this.carsRepository.getCarsByType(carType);
+      const availableCarsOfType = this.carsRepository.getAvailableCarsByType(carType);
 
-      if (car.isCarAvailable()) {
-        stats.availableCars++;
-        stats.availableCarsByType[type]++;
-      } else {
-        stats.reservedCars++;
-      }
+      stats.carsByType[carType] = allCarsOfType.length;
+      stats.availableCarsByType[carType] = availableCarsOfType.length;
+      stats.availableCars += availableCarsOfType.length;
     }
+
+    stats.reservedCars = stats.totalCars - stats.availableCars;
 
     return stats;
   }
 }
-
-export default CarRentalSystem;

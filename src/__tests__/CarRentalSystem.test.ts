@@ -53,7 +53,7 @@ describe("CarRentalSystem", () => {
 
     test("should throw error for negative pricing", () => {
       expect(() => system.setPricing(CarType.SEDAN, -10)).toThrow(
-        "Price per day cannot be negative"
+        "Price per day cannot be negative",
       );
     });
 
@@ -117,11 +117,11 @@ describe("CarRentalSystem", () => {
       startDate.setDate(startDate.getDate() + 1);
 
       expect(() => system.reserveCar(CarType.SEDAN, startDate, 0)).toThrow(
-        "Number of days must be greater than 0"
+        "Number of days must be greater than 0",
       );
 
       expect(() => system.reserveCar(CarType.SEDAN, startDate, -1)).toThrow(
-        "Number of days must be greater than 0"
+        "Number of days must be greater than 0",
       );
     });
 
@@ -130,7 +130,7 @@ describe("CarRentalSystem", () => {
       pastDate.setDate(pastDate.getDate() - 1);
 
       expect(() => system.reserveCar(CarType.SEDAN, pastDate, 3)).toThrow(
-        "Start date cannot be in the past"
+        "Start date cannot be in the past",
       );
     });
 
@@ -144,9 +144,7 @@ describe("CarRentalSystem", () => {
       system.reserveCar(CarType.SEDAN, startDate, 1);
 
       // Try to reserve a fourth sedan
-      expect(() => system.reserveCar(CarType.SEDAN, startDate, 1)).toThrow(
-        /No SEDAN available/
-      );
+      expect(() => system.reserveCar(CarType.SEDAN, startDate, 1)).toThrow(/No SEDAN available/);
     });
 
     test("should prevent double-booking of same car", () => {
@@ -160,9 +158,9 @@ describe("CarRentalSystem", () => {
       const overlappingStartDate = new Date(startDate);
       overlappingStartDate.setDate(overlappingStartDate.getDate() + 1);
 
-      expect(() =>
-        testSystem.reserveCar(CarType.SEDAN, overlappingStartDate, 3)
-      ).toThrow(/No SEDAN available/);
+      expect(() => testSystem.reserveCar(CarType.SEDAN, overlappingStartDate, 3)).toThrow(
+        /No SEDAN available/,
+      );
     });
 
     test("should allow booking same car after previous reservation ends", () => {
@@ -240,9 +238,7 @@ describe("CarRentalSystem", () => {
     });
 
     test("should throw error when canceling non-existent reservation", () => {
-      expect(() => system.cancelReservation("RES-999")).toThrow(
-        "Reservation RES-999 not found"
-      );
+      expect(() => system.cancelReservation("RES-999")).toThrow("Reservation RES-999 not found");
     });
 
     test("should throw error when canceling already canceled reservation", () => {
@@ -252,9 +248,7 @@ describe("CarRentalSystem", () => {
       const reservation = system.reserveCar(CarType.SEDAN, startDate, 1);
       system.cancelReservation(reservation.getId());
 
-      expect(() => system.cancelReservation(reservation.getId())).toThrow(
-        "Reservation"
-      );
+      expect(() => system.cancelReservation(reservation.getId())).toThrow("Reservation");
     });
   });
 
@@ -275,9 +269,7 @@ describe("CarRentalSystem", () => {
     });
 
     test("should throw error when retrieving non-existent reservation", () => {
-      expect(() => system.getReservation("RES-999")).toThrow(
-        "Reservation RES-999 not found"
-      );
+      expect(() => system.getReservation("RES-999")).toThrow("Reservation RES-999 not found");
     });
 
     test("should get all reservations", () => {
@@ -418,13 +410,7 @@ describe("CarRentalSystem", () => {
     test("should create a reservation with correct properties", () => {
       const car = new Car("CAR-001", CarType.SEDAN);
       const startDate = new Date("2025-05-10");
-      const reservation = new Reservation(
-        "RES-001",
-        car,
-        startDate,
-        3,
-        50
-      );
+      const reservation = new Reservation("RES-001", car, startDate, 3, 50);
 
       expect(reservation.getId()).toBe("RES-001");
       expect(reservation.getCar()).toBe(car);
@@ -437,13 +423,7 @@ describe("CarRentalSystem", () => {
       const car = new Car("CAR-001", CarType.VAN);
       const startDate = new Date();
       startDate.setDate(startDate.getDate() + 1);
-      const reservation = new Reservation(
-        "RES-001",
-        car,
-        startDate,
-        5,
-        100
-      );
+      const reservation = new Reservation("RES-001", car, startDate, 5, 100);
 
       const expectedEndDate = new Date(startDate);
       expectedEndDate.setDate(expectedEndDate.getDate() + 5);
@@ -453,13 +433,7 @@ describe("CarRentalSystem", () => {
     test("should calculate total cost correctly", () => {
       const car = new Car("CAR-001", CarType.SUV);
       const startDate = new Date("2025-05-10");
-      const reservation = new Reservation(
-        "RES-001",
-        car,
-        startDate,
-        7,
-        75
-      );
+      const reservation = new Reservation("RES-001", car, startDate, 7, 75);
 
       expect(reservation.getTotalCost()).toBe(525); // 7 * 75
     });

@@ -12,6 +12,11 @@
     "target": "esnext",
     "lib": ["esnext"],
     "types": ["node", "jest"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
 
     // Other Outputs
     "sourceMap": true,

@@ -9,13 +9,7 @@ export class Reservation {
   private numberOfDays: number;
   private totalCost: number;
 
-  constructor(
-    id: string,
-    car: Car,
-    startDate: Date,
-    numberOfDays: number,
-    pricePerDay: number
-  ) {
+  constructor(id: string, car: Car, startDate: Date, numberOfDays: number, pricePerDay: number) {
     this.id = id;
     this.car = car;
     this.startDate = startDate;
